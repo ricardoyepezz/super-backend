@@ -2,7 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const cors = require('cors');
 require('dotenv').config();
-const {storage, bucketName, sheets } = require('./api/google');
+// const {storage, bucketName, sheets } = require('./api/google');
 
 const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
