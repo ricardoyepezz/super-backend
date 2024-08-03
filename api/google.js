@@ -19,7 +19,7 @@ const auth = new google.auth.GoogleAuth({
 const sheets = google.sheets({ version: 'v4', auth });
 const storage = new Storage({ auth });
 
-const bucketName = JSON.parse(process.env.GCS_BUCKET);
+const bucketName = process.env.GCS_BUCKET;
 
 module.exports = { storage, sheets, bucketName };
 
