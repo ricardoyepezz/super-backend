@@ -39,7 +39,7 @@ async function findFirstEmptyRow(sheetName, spreadsheetId) {
 }
 
 const corsOptions = {
-  origin: 'https://upload-expenses.netlify.app', // Asegúrate de que este es el origen correcto
+  origin: '*', // Asegúrate de que este es el origen correcto
   methods: ['GET', 'POST', 'OPTIONS'], // Métodos que quieres permitir
   allowedHeaders: ['Content-Type', 'Authorization'], // Encabezados permitidos
   optionsSuccessStatus: 200 // Algunos navegadores antiguos (IE11, algunos SmartTVs) necesitan esto
