@@ -2,12 +2,12 @@ const express = require('express');
 const multer = require('multer');
 const cors = require('cors');
 require('dotenv').config();
-// const {storage, bucketName, sheets } = require('./api/google');
+const {storage, bucketName, sheets } = require('./api/google');
 
 const app = express();
-// const upload = multer({ storage: multer.memoryStorage() });
-// const gsStorage = storage
-// const bucket = gsStorage.bucket(bucketName)
+const upload = multer({ storage: multer.memoryStorage() });
+const gsStorage = storage
+const bucket = gsStorage.bucket(bucketName)
 
 async function findFirstEmptyRow(sheetName, spreadsheetId) {
   const range = `${sheetName}!C12:G`; // Ajusta para especificar hasta qué columna quieres verificar
@@ -52,6 +52,52 @@ app.options('*', cors(corsOptions));
 app.get('/ping', (req, res) => {
     res.status(200).send({ status: 'ok', message: 'pong' });
 })
+
+app.post('/upload', cors(), upload.single('file'), (req, res) => {
+  if (!req.file) return res.status(400).send('No file uploaded.');
+
+  const uniqueFilename = `${Date.now()}-${req.file.originalname}`;
+
+  const blob = bucket.file(uniqueFilename);
+  const blobStream = blob.createWriteStream({
+    metadata: {
+      contentType: req.file.mimetype
+    }
+  });
+
+  blobStream.on('error', err => res.status(500).send(err.toString()));
+  blobStream.on('finish', () => {
+    const publicUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
+    res.status(200).send({ url: publicUrl });
+  });
+
+  blobStream.end(req.file.buffer);
+});
+
+app.post('/sheet', cors(), async (req, res) => {
+  try {
+    const { date, category, description, amount, imageURL, sheetName, spreadsheetId } = req.body;
+
+    const firstEmptyRow = await findFirstEmptyRow(sheetName, spreadsheetId);
+    const range = `${sheetName}!C${firstEmptyRow}:G${firstEmptyRow}`;
+    const valueInputOption = 'USER_ENTERED';
+    const resource = {
+      values: [[date, category, description, amount, imageURL]],
+    };
+
+    const updateResponse = await sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range,
+      valueInputOption,
+      resource,
+    });
+
+    res.status(200).json({ message: 'Data added to Google Sheets successfully', details: updateResponse.data });
+  } catch (error) {
+    console.error('Error uploading data to Google Sheets:', error);
+    res.status(500).json({ error: error.toString() });
+  }
+});
 
 const port = process.env.PORT || 8080;
 app.listen(port, () => {
