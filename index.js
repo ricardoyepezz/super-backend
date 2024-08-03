@@ -8,6 +8,7 @@ const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
 const gsStorage = storage
 const bucket = gsStorage.bucket(bucketName)
+const port = process.env.PORT || 8080;
 
 async function findFirstEmptyRow(sheetName, spreadsheetId) {
   const range = `${sheetName}!C12:G`; // Ajusta para especificar hasta qué columna quieres verificar
@@ -50,11 +51,27 @@ app.use(express.json());
 app.options('*', cors(corsOptions));
 
 app.get('/ping', (req, res) => {
+  try {
     res.status(200).send({ status: 'ok', message: 'pong' });
-})
+  } catch (error) {
+    console.error('Error in /ping route:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+app.get('/check-credentials', (req, res) => {
+  if (!process.env.GOOGLE_CREDENTIALS) {
+    return res.status(500).json({ error: 'GOOGLE_CREDENTIALS not found' });
+  }
+
+  res.status(200).json({ message: 'Credentials are loaded correctly' });
+});
 
 app.post('/upload', cors(), upload.single('file'), (req, res) => {
-  if (!req.file) return res.status(400).send('No file uploaded.');
+  if (!req.file) {
+    console.error('No file uploaded.');
+    return res.status(400).json({ error: 'No file uploaded.' });
+  }
 
   const uniqueFilename = `${Date.now()}-${req.file.originalname}`;
 
@@ -65,10 +82,14 @@ app.post('/upload', cors(), upload.single('file'), (req, res) => {
     }
   });
 
-  blobStream.on('error', err => res.status(500).send(err.toString()));
+  blobStream.on('error', err => {
+    console.error('Error during file upload:', err);
+    res.status(500).json({ error: 'Internal Server Error during file upload.' });
+  });
+
   blobStream.on('finish', () => {
     const publicUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
-    res.status(200).send({ url: publicUrl });
+    res.status(200).json({ url: publicUrl });
   });
 
   blobStream.end(req.file.buffer);
@@ -77,6 +98,11 @@ app.post('/upload', cors(), upload.single('file'), (req, res) => {
 app.post('/sheet', cors(), async (req, res) => {
   try {
     const { date, category, description, amount, imageURL, sheetName, spreadsheetId } = req.body;
+    
+    if (!date || !category || !description || !amount || !imageURL || !sheetName || !spreadsheetId) {
+      console.error('Missing required fields in request body.');
+      return res.status(400).json({ error: 'Missing required fields in request body.' });
+    }
 
     const firstEmptyRow = await findFirstEmptyRow(sheetName, spreadsheetId);
     const range = `${sheetName}!C${firstEmptyRow}:G${firstEmptyRow}`;
@@ -95,11 +121,11 @@ app.post('/sheet', cors(), async (req, res) => {
     res.status(200).json({ message: 'Data added to Google Sheets successfully', details: updateResponse.data });
   } catch (error) {
     console.error('Error uploading data to Google Sheets:', error);
-    res.status(500).json({ error: error.toString() });
+    res.status(500).json({ error: 'Internal Server Error during data upload to Google Sheets.' });
   }
 });
 
-const port = process.env.PORT || 8080;
+
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
