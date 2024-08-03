@@ -5,9 +5,9 @@ require('dotenv').config();
 // const {storage, bucketName, sheets } = require('./api/google');
 
 const app = express();
-const upload = multer({ storage: multer.memoryStorage() });
-const gsStorage = storage
-const bucket = gsStorage.bucket(bucketName)
+// const upload = multer({ storage: multer.memoryStorage() });
+// const gsStorage = storage
+// const bucket = gsStorage.bucket(bucketName)
 
 async function findFirstEmptyRow(sheetName, spreadsheetId) {
   const range = `${sheetName}!C12:G`; // Ajusta para especificar hasta qué columna quieres verificar
