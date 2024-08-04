@@ -9,6 +9,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 const gsStorage = storage
 const bucket = gsStorage.bucket(bucketName)
 const port = process.env.PORT || 8080;
+console.log(bucket.file);
 
 async function findFirstEmptyRow(sheetName, spreadsheetId) {
   const range = `${sheetName}!C12:G`; // Ajusta para especificar hasta qué columna quieres verificar
@@ -81,6 +82,8 @@ app.post('/upload', cors(), upload.single('file'), (req, res) => {
       contentType: req.file.mimetype
     }
   });
+console.log('bucket', bucket.name);
+console.log('blob', blob.name);
 
   blobStream.on('error', err => {
     console.error('Error during file upload:', err);
