@@ -17,7 +17,14 @@ const auth = new google.auth.GoogleAuth({
 });
 
 const sheets = google.sheets({ version: 'v4', auth });
-const storage = new Storage({ auth });
+
+const storage = new Storage({
+  projectId: credentials.project_id,
+  credentials: {
+    client_email: credentials.client_email,
+    private_key: credentials.private_key,
+  }
+});
 
 const bucketName = process.env.GCS_BUCKET;
 

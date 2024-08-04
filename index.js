@@ -9,7 +9,6 @@ const upload = multer({ storage: multer.memoryStorage() });
 const gsStorage = storage
 const bucket = gsStorage.bucket(bucketName)
 const port = process.env.PORT || 8080;
-console.log(bucket.file);
 
 async function findFirstEmptyRow(sheetName, spreadsheetId) {
   const range = `${sheetName}!C12:G`; // Ajusta para especificar hasta qué columna quieres verificar
@@ -41,7 +40,7 @@ async function findFirstEmptyRow(sheetName, spreadsheetId) {
 }
 
 const corsOptions = {
-  origin: '*', // Asegúrate de que este es el origen correcto
+  origin: 'https://upload-expenses.netlify.app', // Asegúrate de que este es el origen correcto
   methods: ['GET', 'POST', 'OPTIONS'], // Métodos que quieres permitir
   allowedHeaders: ['Content-Type', 'Authorization'], // Encabezados permitidos
   optionsSuccessStatus: 200 // Algunos navegadores antiguos (IE11, algunos SmartTVs) necesitan esto
@@ -58,14 +57,6 @@ app.get('/ping', (req, res) => {
     console.error('Error in /ping route:', error);
     res.status(500).send('Internal Server Error');
   }
-});
-
-app.get('/check-credentials', (req, res) => {
-  if (!process.env.GOOGLE_CREDENTIALS) {
-    return res.status(500).json({ error: 'GOOGLE_CREDENTIALS not found' });
-  }
-
-  res.status(200).json({ message: 'Credentials are loaded correctly' });
 });
 
 app.post('/upload', cors(), upload.single('file'), (req, res) => {
@@ -125,7 +116,6 @@ app.post('/sheet', cors(), async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error during data upload to Google Sheets.' });
   }
 });
-
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
