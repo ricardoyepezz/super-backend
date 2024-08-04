@@ -71,7 +71,7 @@ app.get('/check-credentials', (req, res) => {
 app.post('/upload', cors(), upload.single('file'), (req, res) => {
   if (!req.file) {
     console.error('No file uploaded.');
-    return res.status(400).json({ error: 'No file uploaded.' });
+    return res.status(400).json({ error: `No file uploaded. ${bucket.name}` });
   }
 
   const uniqueFilename = `${Date.now()}-${req.file.originalname}`;
@@ -82,8 +82,6 @@ app.post('/upload', cors(), upload.single('file'), (req, res) => {
       contentType: req.file.mimetype
     }
   });
-console.log('bucket', bucket.name);
-console.log('blob', blob.name);
 
   blobStream.on('error', err => {
     console.error('Error during file upload:', err);
